@@ -14,7 +14,7 @@ class VAE(DAE):
         super().__init__(vocab, args)
 
     @classmethod
-    def load(cls, path='./seq2vec/trained/model.pth'):
+    def load(cls, path='./seq2vec/trained/model.pt'):
         dt = torch.load(path)
         vocab = Vocab('./seq2vec/trained/vocab.txt')
         model = VAE(vocab, dt['args'])
