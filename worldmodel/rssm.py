@@ -66,3 +66,17 @@ class TransitionModel(nn.Module):
             self.posterior(rnn_hidden, embedded_next_obs)
 
         return next_state_prior, next_state_posterior, rnn_hidden
+
+
+class ObservationModel(nn.Module):
+    """
+    p(o_t| s_t, h_t)
+    o_t: vector of text-sequence
+    """
+    def __init__(self, state_dim, rnn_hidden_dim):
+        super(ObservationModel, self).__init__()
+        self.fc = nn.Linear(state_dim + rnn_hidden_dim, 128)
+
+    def forward(self, state, rnn_hidden):
+        obs = self.fc(torch.cat([state, rnn_hidden], dim=1))
+        return obs
