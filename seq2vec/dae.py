@@ -30,13 +30,13 @@ class DAE(TextModel):
     def __init__(self, vocab, args):
         super().__init__(vocab, args)
         self.drop = nn.Dropout(args.dropout)
-        self.encoder = nn.LSTM(
+        self.E = nn.LSTM(
             input_size=args.dim_emb,
             hidden_size=args.dim_h,
             num_layers=args.nlayers,
             dropout=args.dropout if args.nlayers > 1 else 0,
             bidirectional=True)
-        self.decoder = nn.LSTM(
+        self.G = nn.LSTM(
             input_size=args.dim_emb,
             hidden_size=args.dim_h,
             num_layers=args.nlayers,
