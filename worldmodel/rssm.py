@@ -7,7 +7,7 @@ from torch.distributions import Normal
 class TransitionModel(nn.Module):
     def __init__(
         self, state_dim, rnn_hidden_dim,
-            hidden_dim=200, min_stddev=0.1, act=F.elu):
+            hidden_dim=30, min_stddev=0.1, act=F.elu):
         super(TransitionModel, self).__init__()
         self.state_dim = state_dim
         self.rnn_hidden_dim = rnn_hidden_dim
@@ -18,7 +18,7 @@ class TransitionModel(nn.Module):
         self.fc_state_stddev_prior = nn.Linear(hidden_dim, state_dim)
 
         self.fc_rnn_hidden_embedded_obs = nn.Linear(
-            rnn_hidden_dim + 1024, hidden_dim)
+            rnn_hidden_dim + 128, hidden_dim)
 
         self.fc_state_mean_posterior = nn.Linear(hidden_dim, state_dim)
         self.fc_state_stddev_posterior = nn.Linear(hidden_dim, state_dim)
@@ -57,7 +57,7 @@ class TransitionModel(nn.Module):
         stddev = F.softplus(
             self.fc_state_stddev_posterior(hidden)) + self._min_stddev
 
-        return Normal(mean, stddev), rnn_hidden
+        return Normal(mean, stddev)
 
     def forward(self, state, rnn_hidden, embedded_next_obs):
         next_state_prior, rnn_hidden = \

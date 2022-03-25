@@ -1,5 +1,6 @@
 seq2vec/trained/
 *.pt
+dataset/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
