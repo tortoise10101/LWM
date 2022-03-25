@@ -12,7 +12,7 @@ class ReplayBuffer(object):
         self.capacity = capacity
 
         self.observations = np.zeros(
-            (capacity, *observation_shape), dtype=np.uint8)
+            (capacity, observation_shape), dtype=np.uint8)
         self.done = np.zeros((capacity, 1), dtype=np.bool)
 
         self.index = 0
@@ -40,7 +40,8 @@ class ReplayBuffer(object):
             sampled_indexes += list(range(initial_index, final_index + 1))
 
         sampled_observations = self.observations[sampled_indexes].reshape(
-            batch_size, chunk_length, *self.observations.shape[1:])
+            batch_size, chunk_length, -1)
+        #    batch_size, chunk_length, *self.observations.shape[1:])
         sampled_done = self.done[sampled_indexes].reshape(
             batch_size, chunk_length, 1)
 
