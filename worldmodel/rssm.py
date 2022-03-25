@@ -80,3 +80,10 @@ class ObservationModel(nn.Module):
     def forward(self, state, rnn_hidden):
         obs = self.fc(torch.cat([state, rnn_hidden], dim=1))
         return obs
+
+
+class RSSM:
+    def __init__(self, state_dim, rnn_hidden_dim):
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.transition = TransitionModel(state_dim, rnn_hidden_dim).to(self.device)
+        self.observation = ObservationModel(state_dim, rnn_hidden_dim).to(self.device)
