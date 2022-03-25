@@ -85,7 +85,6 @@ class DAE(TextModel):
     def encode(self, input):
         input = self.drop(self.embed(input))
         _, (h, _) = self.E(input)
-        print(h.shape)
         h = torch.cat([h[-2], h[-1]], 1)
         return self.h2mu(h), self.h2logvar(h)
 
