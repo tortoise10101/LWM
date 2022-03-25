@@ -23,6 +23,36 @@ class TextModel(nn.Module):
         self.proj.bias.data.zero_()
         self.proj.weight.data.uniform_(-initrange, initrange)
 
+    def tokenize(self, text):
+        if isinstance(text, str):
+            return self.__tokenize(text)
+        # batch
+        seqs = [i.split() for i in text]
+        max_len = max([len(s) for s in seqs])
+        go_x = []
+        for s in seqs:
+            s_idx = [self.vocab.go] + \
+                [self.vocab.word2idx[w] if w in self.vocab.word2idx else self.vocab.unk for w in s]
+            padding = [self.vocab.pad] * (max_len-len(s))
+            go_x.append(s_idx + padding)
+        return torch.LongTensor(go_x).t().contiguous()
+
+    def __tokenize(self, text):
+        text = text.split()
+        s_idx = [self.vocab.go] + \
+            [self.vocab.word2idx[w] if w in self.vocab.word2idx else self.vocab.unk for w in text]
+        return torch.tensor(s_idx).view(-1, 1)
+
+    def detokenize(self, v):
+        sents = []
+        for s in v.t():
+            sents.append([self.vocab.idx2word[id] for id in s[1:]])
+        return self.strip_eos(sents)
+
+    def strip_eos(self, sents):
+        return [sent[:sent.index('<eos>')] \
+            if '<eos>' in sent else sent for sent in sents]
+
 
 class DAE(TextModel):
     """Denoising Auto-Encoder"""
@@ -55,6 +85,7 @@ class DAE(TextModel):
     def encode(self, input):
         input = self.drop(self.embed(input))
         _, (h, _) = self.E(input)
+        print(h.shape)
         h = torch.cat([h[-2], h[-1]], 1)
         return self.h2mu(h), self.h2logvar(h)
 
