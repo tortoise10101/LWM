@@ -1,8 +1,10 @@
 # copyright @ 2019 shentianxiao
 # copy from https://github.com/shentianxiao/text-autoencoders
+import torch
 
 from .dae import DAE
 from .utils import loss_kl
+from .vocab import Vocab
 
 
 class VAE(DAE):
@@ -10,6 +12,14 @@ class VAE(DAE):
 
     def __init__(self, vocab, args):
         super().__init__(vocab, args)
+
+    @classmethod
+    def load(cls, path='./seq2vec/trained/model.pth'):
+        dt = torch.load(path)
+        vocab = Vocab('./seq2vec/trained/vocab.txt')
+        model = VAE(vocab, dt['args'])
+        model.load_state_dict(dt['model'])
+        return model
 
     def loss(self, losses):
         return losses['rec'] + self.args.lambda_kl * losses['kl']
