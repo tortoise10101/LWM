@@ -24,7 +24,7 @@ model_params = (
     list(rssm.observation.parameters()))
 model_optimizer = torch.optim.Adam(model_params, lr=model_lr, eps=eps)
 
-cap = 1000000 * 5
+cap = 1000000
 replay_buffer = ReplayBuffer(capacity=cap, observation_shape=latent_dim)
 
 gmmma = 0.9
@@ -99,8 +99,7 @@ def prepare_buffer():
         r = f.read().split('\n')
         bs = 32*2*2
         for i in range(0, len(r)-bs, bs):
-
-            print(100*i/len(r), '%')
+            print("%.3f %%, %.3f %%" % (100*i/len(r), 100*i/replay_buffer.capacity))
             if replay_buffer.is_filled:
                 break
             if i/len(r) > 0.1:
@@ -108,8 +107,8 @@ def prepare_buffer():
             _, _, z, _ = seq2vec.forward(
                 seq2vec.tokenize(r[i:i+bs]).to(device))
             z = z.detach().cpu().numpy()
-            for j in z:
-                replay_buffer.push(j, False)
+            # TODO add split
+            replay_buffer.push_batch(z, torch.tensor([False]*bs).view(-1, 1))
 
 
 def load_buffer():
@@ -152,22 +151,29 @@ def decode(imagined_states, imagined_rnn_hiddens):
     return seqt
 
 
-# prepare_buffer()
-# dump_buffer()
-load_buffer()
-
-train()
-
-
 def generate(text):
     imagined_states, imagined_rnn_hiddens = \
         imagine(text)
     seqt = decode(imagined_states, imagined_rnn_hiddens)
-    return seqt
+    seq = ""
+    for s in seqt:
+        for c in s[0]:
+            seq += c
+            seq += " "
+        seq += "\n"
 
+    print(seq, sep="\n")
+    # return seq
+
+
+prepare_buffer()
+dump_buffer()
+# load_buffer()
+
+train()
 
 p = generate("The book is a good book.")
-print(p)
+print(p, sep="\n")
 
 '''
 def prepare_buffer():
