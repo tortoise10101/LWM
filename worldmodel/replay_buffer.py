@@ -12,7 +12,7 @@ class ReplayBuffer(object):
         self.capacity = capacity
 
         self.observations = np.zeros(
-            (capacity, observation_shape))
+            (capacity, observation_shape), dtype=np.float32)
         #    (capacity, observation_shape), dtype=np.uint8)
         self.done = np.zeros((capacity, 1), dtype=np.bool)
 
@@ -26,6 +26,23 @@ class ReplayBuffer(object):
         if self.index == self.capacity - 1:
             self.is_filled = True
         self.index = (self.index + 1) % self.capacity
+
+    def push_batch(self, observations, done):
+        bs = len(done)
+        if self.index + bs > self.capacity:
+            self.is_filled = True
+            self.observations[self.index:] = \
+                observations[:self.capacity - self.index]
+            self.observations[:bs - (self.capacity - self.index)] = \
+                observations[self.capacity - self.index:]
+
+            self.done[self.index:] = done[:self.capacity - self.index]
+            self.done[:bs - (self.capacity - self.index)] = \
+                done[self.capacity - self.index:]
+        else:
+            self.observations[self.index: self.index + bs] = observations
+            self.done[self.index: self.index + bs] = done
+        self.index = (self.index + bs) % self.capacity
 
     def sample(self, batch_size, chunk_length):
         episode_borders = np.where(self.done)[0]
