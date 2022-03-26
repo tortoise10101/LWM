@@ -8,10 +8,10 @@ mv tmptmptmp/checkpoints/yelp/daae/* seq2vec/trained/.
 rm -r tmpfile
 rm -r tmptmptmp
 
-# load wiki-text to evaluate world model
-wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-raw-v1.zip
-unzip -o wikitext-2-raw-v1.zip -d tmptmptmp
+# load bookcorpus to evaluate world model
+f='16KCjV9z_FHm8LgZw05RSuk4EsAWPOP_z'
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id='${f} -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=${f}" -O tmpfile && rm -rf /tmp/cookies.txt
+tar -jxvf tmpfile books_large_p2.txt
 mkdir dataset
-mv tmptmptmp/wikitext-2-raw/* dataset/.
-rm -r tmptmptmp
-rm wikitext-2-raw-v1.zip
+mv books_large_* dataset/.
+rm tmpfile
