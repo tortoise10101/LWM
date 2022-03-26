@@ -12,7 +12,8 @@ class ReplayBuffer(object):
         self.capacity = capacity
 
         self.observations = np.zeros(
-            (capacity, observation_shape), dtype=np.uint8)
+            (capacity, observation_shape))
+        #    (capacity, observation_shape), dtype=np.uint8)
         self.done = np.zeros((capacity, 1), dtype=np.bool)
 
         self.index = 0
