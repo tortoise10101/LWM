@@ -7,3 +7,5 @@ services:
         volumes:
             - .:/home
         tty: true
+        ports:
+            - "6006:6006"

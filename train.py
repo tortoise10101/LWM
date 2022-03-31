@@ -2,6 +2,7 @@ import torch
 from torch.distributions.kl import kl_divergence
 from torch.nn import functional as F
 from torch.nn.utils import clip_grad_norm_
+from torch.utils.tensorboard import SummaryWriter
 
 from worldmodel import RSSM, ReplayBuffer
 from seq2vec import VAE
@@ -25,6 +26,7 @@ model_params = (
 model_optimizer = torch.optim.Adam(model_params, lr=model_lr, eps=eps)
 
 cap = 1000000
+cap = 10000
 replay_buffer = ReplayBuffer(capacity=cap, observation_shape=latent_dim)
 
 gmmma = 0.9
@@ -35,8 +37,12 @@ clip_grad_norm = 100
 batch_size = 32*4
 chunk_length = 20
 
+log_dir = 'logs'
+writer= SummaryWriter(log_dir)
 
+cnt = 0
 def train():
+    global cnt
     global seq2vec, rssm, model_optimizer, replay_buffer
     for t in range(1000):
         observations, _ = replay_buffer.sample(batch_size, chunk_length)
@@ -91,13 +97,18 @@ def train():
         if t % 10 == 0:
             print('update_step: %3d model loss: %.5f, kl_loss: %.5f, obs_loss: %.5f' \
                 % (t, model_loss.item(), kl_loss.item(), obs_loss.item()))
+        # Output Log to TensorBoard
+        cnt += 1
+        writer.add_scalar('model loss', model_loss.item(), cnt)
+        writer.add_scalar('kl loss', kl_loss.item(), cnt)
+        writer.add_scalar('obs loss', obs_loss.item(), cnt)
 
 
 def prepare_buffer():
     global replay_buffer
     with open('dataset/books_large_p2.txt', 'r') as f:
         r = f.read().split('\n')
-        bs = 32*2*2
+        bs = 32*2
         for i in range(0, len(r)-bs, bs):
             print("%.3f %%, %.3f %%" % (100*i/len(r), 100*i/replay_buffer.capacity))
             if replay_buffer.is_filled:
@@ -166,9 +177,9 @@ def generate(text):
     # return seq
 
 
-prepare_buffer()
-dump_buffer()
-# load_buffer()
+#prepare_buffer()
+#dump_buffer()
+load_buffer()
 
 train()
 
@@ -192,6 +203,4 @@ def prepare_buffer():
             z = z.detach().cpu().numpy()
             for j in z:
                 replay_buffer.push(j, False)
-
-
 '''
