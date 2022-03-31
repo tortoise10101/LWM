@@ -1,3 +1,5 @@
+import os
+from statistics import mode
 import torch
 from torch.distributions.kl import kl_divergence
 from torch.nn import functional as F
@@ -12,9 +14,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 seq2vec = VAE.load().to(device)
 
 latent_dim = 128
-state_dim = 128
+state_dim = 200
 rnn_hidden_dim = 200
-rssm = RSSM(
+rssm = SRSSM(
     state_dim=state_dim,
     rnn_hidden_dim=rnn_hidden_dim)
 
@@ -31,12 +33,12 @@ replay_buffer = ReplayBuffer(capacity=cap, observation_shape=latent_dim)
 free_nats = 3
 clip_grad_norm = 100
 
-batch_size = 32*4
+batch_size = 32*4*2
 chunk_length = 20
 
 collect_interval = 101
 
-log_dir = 'logs'
+log_dir = 'logs/log-2022-3-31-16-40/'
 writer= SummaryWriter(log_dir)
 
 def train():
@@ -49,9 +51,11 @@ def train():
     for episode in range(batch_size, len(r[:num_eps])):
         _, _, z, _ = seq2vec.forward(
             seq2vec.tokenize(r[episode-batch_size:episode]).to(device))
-        z = z.detach().cpu().numpy()
+        zz = z.detach().cpu().numpy()
         # TODO add split
-        replay_buffer.push_batch(z, torch.tensor([False]*batch_size).view(-1, 1))
+        replay_buffer.push_batch(zz, torch.tensor([False]*batch_size).view(-1, 1))
+        del z # to avoid CUDA memory error
+        torch.cuda.empty_cache()
 
         for update_step in range(collect_interval):
             observations, _ = replay_buffer.sample(batch_size, chunk_length)
@@ -103,12 +107,17 @@ def train():
 
             if update_step % 10 == 0:
                 print('update_step: %3d model loss: %.5f, kl_loss: %.5f, obs_loss: %.5f' \
-                    % (update_step, model_loss.item(), kl_loss.item(), obs_loss.item()))
+                    % (update_step+episode*num_eps, model_loss.item(), kl_loss.item(), obs_loss.item()))
             # Output Log to TensorBoard
             total_update_step = episode * collect_interval + update_step
             writer.add_scalar('model loss', model_loss.item(), total_update_step)
             writer.add_scalar('kl loss', kl_loss.item(), total_update_step)
             writer.add_scalar('obs loss', obs_loss.item(), total_update_step)
+
+        if (episode + 1) % 10 == 0:
+            os.makedirs("./worldmodel/trained/", exist_ok=True)
+            torch.save(rssm.transition.state_dict(), "./worldmodel/trained/rssm.pth")
+            torch.save(rssm.observation.state_dict(), "./worldmodel/trained/obs_model.pth")
 
 
 def imagine(text, nhorizon=10):
@@ -147,8 +156,7 @@ def generate(text):
         for c in s[0]:
             seq += c
             seq += " "
-        seq += "\n"
-
+        seq += ".\n"
     print(seq, sep="\n")
     # return seq
 

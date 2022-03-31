@@ -1,4 +1,5 @@
 seq2vec/trained/
+worldmodel/trained/
 *.pt
 dataset/
 logs/
