@@ -7,7 +7,7 @@ from torch.distributions import Normal
 class TransitionModel(nn.Module):
     def __init__(
         self, state_dim, rnn_hidden_dim,
-            hidden_dim=30, min_stddev=0.1, act=F.elu):
+            hidden_dim=30, min_stddev=0.1):
         super(TransitionModel, self).__init__()
         self.state_dim = state_dim
         self.rnn_hidden_dim = rnn_hidden_dim
@@ -24,7 +24,7 @@ class TransitionModel(nn.Module):
         self.fc_state_stddev_posterior = nn.Linear(hidden_dim, state_dim)
 
         self.rnn = nn.GRUCell(
-            input_size=hidden_dim,
+            input_size=state_dim,
             hidden_size=rnn_hidden_dim)
         self._min_stddev = min_stddev
 
