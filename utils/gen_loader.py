@@ -21,7 +21,7 @@ for i in js.keys():
         long_id.append(i)
 
 
-cmds = ['#!/bin/bash']
+cmds = []
 for id in long_id:
     url = "https://www.youtube.com/watch?v=" + id[2:]
     indx = 0
@@ -33,8 +33,20 @@ for id in long_id:
             # ffmpeg -ss "00:00:10" -i $(youtube-dl -f 22 --get-url "https://www.youtube.com/watch?v=HeaX1dOxUec") -vframes 1 -q:v 2 tmp.jpgx
         indx += 1
 
-
+'''
 with open('dataset/frames/extract_frames.sh', 'w') as fp:
+    fp.write('#!/bin/bash\n')
     for i in cmds:
         fp.write(i + '\n')
 print("Generate loader script in dataset/frames/extract_frames.sh")
+'''
+
+# for multi
+import numpy as np
+cnt = 0
+for i in np.array_split(cmds, 12):
+    cnt += 1
+    with open(f'dataset/frames/extract_frames{cnt}.sh', 'w') as fp:
+        fp.write('#!/bin/bash\n')
+        for j in i:
+            fp.write(j + '\n')
